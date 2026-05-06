@@ -1,232 +1,394 @@
-# EduNexus
+# EduNexus Backend API
 
-EduNexus is a centralized course management system that connects students, lecturers, and administrators through a unified platform for learning, communication, and academic management.
+## Overview
 
----
+EduNexus is a university course management backend system built using Flask, PostgreSQL, and JWT authentication. The system supports course management, enrollments, assignments, forums, grading, and calendar event management.
 
-## 🛠 Tech Stack
-
-* **Frontend:** HTML, CSS, JavaScript (Vanilla)
-* **Backend:** Flask (Python)
-* **Database:** PostgreSQL
-* **Environment:** WSL (Ubuntu)
-* **API Testing:** Postman
-* **Authentication:** JWT (JSON Web Tokens)
-* **Database Access:** Raw SQL (psycopg2)
+The backend was designed to support large-scale academic datasets and includes automated seed data generation for over 100,000 students.
 
 ---
 
-## 📦 Features
+# Features
 
-* User Registration & Login (Student, Lecturer, Admin)
-* Course Creation & Enrollment
-* Course Membership Management
-* Forum Discussions (Threads & Replies)
-* Course Content Management (Sections, Files, Links)
-* Assignment Submission & Grading
-* Calendar Events
-* Reports & Analytics
+## Authentication & Authorization
+
+* User registration
+* User login
+* JWT authentication
+* Role-based authorization
+* Protected API routes
+
+## User Roles
+
+* Admin
+* Lecturer
+* Student
+
+## Course Management
+
+* Create courses
+* View courses
+* Enroll students into courses
+* View enrolled students
+
+## Forum System
+
+* Create forums
+* Create discussion threads
+* Reply to threads
+* View thread replies
+
+## Assignment System
+
+* Create assignments
+* Submit assignments
+* Grade submissions
+* View course assignments
+
+## Calendar Events
+
+* Create course calendar events
+* View course calendar events
+
+## Database Features
+
+* PostgreSQL relational database
+* SQL views for analytical reporting
+* Large-scale seed data generation
+* Supports over 100,000 students
 
 ---
 
-## 🗂 Project Structure
+# Technologies Used
 
-```id="g1d9kp"
-EduNexus/
+| Technology    | Purpose                     |
+| ------------- | --------------------------- |
+| Flask         | Backend framework           |
+| PostgreSQL    | Relational database         |
+| Psycopg2      | PostgreSQL database adapter |
+| JWT           | Authentication              |
+| Werkzeug      | Password hashing            |
+| Python Dotenv | Environment variables       |
+| Postman       | API testing                 |
+
+---
+
+# Project Structure
+
+```txt
+backend/
 │
-├── backend/
-│   ├── app.py
-│   ├── db.py
-│   ├── config.py
-│   ├── routes/
-│   ├── sql/
-│   └── requirements.txt
+├── app.py
+├── routes.py
+├── db.py
+├── config.py
+├── requirements.txt
+├── .env
 │
-├── frontend/
-│   ├── index.html
-│   ├── css/
-│   │   └── styles.css
-│   ├── js/
-│   │   └── app.js
-│   └── assets/
+├── sql/
+│   ├── schema.sql
+│   ├── views.sql
+│   └── generate_seed_data.py
+│
+├── EduNexus.postman_collection.json
 │
 └── README.md
 ```
 
 ---
 
-## ⚙️ Backend Setup
+# Environment Variables
 
-```bash id="6e3k8u"
-git clone https://github.com/Chrissy0105/EduNexus.git
+Create a `.env` file in the backend directory.
+
+Example:
+
+```env
+DB_HOST=localhost
+DB_NAME=edunexus
+DB_USER=course_user
+DB_PASSWORD=your_password
+DB_PORT=5432
+SECRET_KEY=edunexus_secret_key
+```
+
+---
+
+# Installation
+
+## Clone Repository
+
+```bash
+git clone https://github.com/your-username/EduNexus.git
 cd EduNexus/backend
+```
 
+---
+
+# Create Virtual Environment
+
+```bash
 python3 -m venv venv
+```
+
+Activate virtual environment:
+
+```bash
 source venv/bin/activate
+```
+
+---
+
+# Install Dependencies
+
+```bash
 pip install -r requirements.txt
-
-sudo service postgresql start
-
-flask run
 ```
 
 ---
 
-## 🌐 Frontend Setup
+# PostgreSQL Database Setup
 
-Since this is a static frontend, no build tools are required.
+## Create Database
 
-### Option 1: Open directly
-
-```bash id="5v2h1u"
-cd EduNexus/frontend
-open index.html
+```sql
+CREATE DATABASE edunexus;
 ```
 
-### Option 2 (Recommended): Use Live Server (VS Code)
+## Create User
 
-* Right-click `index.html`
-* Click **"Open with Live Server"**
-
----
-
-## 🔗 Backend–Frontend Connection
-
-Frontend communicates with backend via:
-
-```id="b6a0tg"
-http://localhost:5000/api/v1
+```sql
+CREATE USER course_user WITH PASSWORD 'your_password';
 ```
 
-Example request:
+## Grant Permissions
 
-```javascript id="4h3h7u"
-fetch("http://localhost:5000/api/v1/courses")
-  .then(res => res.json())
-  .then(data => console.log(data));
+```sql
+GRANT ALL PRIVILEGES ON DATABASE edunexus TO course_user;
+GRANT ALL ON SCHEMA public TO course_user;
 ```
 
 ---
 
-## ⚠️ Enable CORS (Required)
+# Create Database Tables
 
-Install:
+Run:
 
-```bash id="3bp7c2"
-pip install flask-cors
-```
-
-In `app.py`:
-
-```python id="kz0q1p"
-from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)
+```bash
+psql -h localhost -U course_user -d edunexus -f sql/schema.sql
 ```
 
 ---
 
-## 📡 API Contract (Frontend Integration)
+# Create SQL Views
 
-### 🔐 Authentication
+Run:
 
-**POST** `/api/v1/auth/register`
-
-```json id="j0o6qz"
-{
-  "name": "John Doe",
-  "email": "john@gmail.com",
-  "password": "123456",
-  "role": "student"
-}
+```bash
+psql -h localhost -U course_user -d edunexus -f sql/views.sql
 ```
 
 ---
 
-**POST** `/api/v1/auth/login`
+# Generate Seed Data
 
-```json id="qnt8e4"
-{
-  "success": true,
-  "token": "jwt_token_here"
-}
+The project includes a large-scale seed data generator.
+
+Generated data includes:
+
+* 100,000 students
+* 50 lecturers
+* 200 courses
+* Forums
+* Threads
+* Replies
+* Assignments
+* Submissions
+* Grades
+* Calendar events
+
+Run:
+
+```bash
+python sql/generate_seed_data.py
 ```
 
 ---
 
-### 📚 Courses
+# Run Flask Application
 
-* **GET** `/api/v1/courses`
-* **POST** `/api/v1/courses`
-* **POST** `/api/v1/courses/:id/enroll`
+Start the backend server:
 
----
+```bash
+python app.py
+```
 
-### 💬 Forums & Threads
+Server URL:
 
-* **GET** `/api/v1/courses/:id/forums`
-* **POST** `/api/v1/threads`
-* **POST** `/api/v1/threads/:id/reply`
-
----
-
-### 📁 Course Content
-
-* **GET** `/api/v1/courses/:id/content`
-* **POST** `/api/v1/content`
-
----
-
-### 📝 Assignments
-
-* **POST** `/api/v1/assignments/submit`
-* **POST** `/api/v1/grades`
-
----
-
-### 📊 Reports
-
-* **GET** `/api/v1/reports/top-students`
-
----
-
-## 🔄 Response Format
-
-```json id="y8sj9g"
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": {}
-}
+```txt
+http://127.0.0.1:5000
 ```
 
 ---
 
-## 📌 Academic Requirements Covered
+# JWT Authentication
 
-* REST API implementation
-* Database design and normalization
-* Large dataset handling (100,000+ students)
-* Role-based system
-* SQL Views for reporting
-* Frontend + Backend integration (Bonus)
+Protected routes require a JWT token.
 
----
+Login route:
 
-## 👨‍💻 Authors
+```txt
+POST /api/v1/auth/login
+```
 
-* Christina Blye
-* Christoff Cohen
-* Joshua Henry
-* Ruth-Ann Allen
-* Jaden Jones
+Use the returned token in Postman headers:
+
+```txt
+Authorization: Bearer your_token_here
+```
 
 ---
 
-## 🚀 Future Improvements
+# API Endpoints
 
-* Better UI/UX design
-* Deployment
-* Dockerization
-* Performance optimization
+## Authentication
+
+| Method | Endpoint              | Description   |
+| ------ | --------------------- | ------------- |
+| POST   | /api/v1/auth/register | Register user |
+| POST   | /api/v1/auth/login    | Login user    |
+
+---
+
+## Courses
+
+| Method | Endpoint                      | Description           |
+| ------ | ----------------------------- | --------------------- |
+| POST   | /api/v1/courses               | Create course         |
+| GET    | /api/v1/courses               | Get courses           |
+| POST   | /api/v1/courses/enroll        | Enroll course         |
+| GET    | /api/v1/courses/<id>/students | Get enrolled students |
+
+---
+
+## Forums
+
+| Method | Endpoint                     | Description        |
+| ------ | ---------------------------- | ------------------ |
+| POST   | /api/v1/forums               | Create forum       |
+| POST   | /api/v1/threads              | Create thread      |
+| POST   | /api/v1/replies              | Create reply       |
+| GET    | /api/v1/threads/<id>/replies | Get thread replies |
+
+---
+
+## Assignments
+
+| Method | Endpoint                         | Description       |
+| ------ | -------------------------------- | ----------------- |
+| POST   | /api/v1/assignments              | Create assignment |
+| POST   | /api/v1/submissions              | Submit assignment |
+| POST   | /api/v1/grades                   | Grade submission  |
+| GET    | /api/v1/courses/<id>/assignments | Get assignments   |
+
+---
+
+## Calendar Events
+
+| Method | Endpoint                             | Description  |
+| ------ | ------------------------------------ | ------------ |
+| POST   | /api/v1/calendar-events              | Create event |
+| GET    | /api/v1/courses/<id>/calendar-events | Get events   |
+
+---
+
+# SQL Views
+
+The project includes analytical SQL views.
+
+## Available Views
+
+* courses_with_50_or_more_students
+* students_with_5_or_more_courses
+* lecturers_teaching_3_or_more_courses
+* top_10_most_enrolled_courses
+* top_10_students_highest_averages
+
+---
+
+# Postman Collection
+
+Import the Postman collection file:
+
+```txt
+EduNexus.postman_collection.json
+```
+
+In Postman:
+
+```txt
+Import → File → Select JSON File
+```
+
+---
+
+# Testing
+
+The backend APIs were tested using Postman.
+
+Testing included:
+
+* Authentication
+* Authorization
+* Role protection
+* CRUD operations
+* Database integration
+* Large-scale seed data generation
+* SQL analytical views
+
+---
+
+# Sample Login Credentials
+
+## Admin
+
+```txt
+Email: admin@edunexus.com
+Password: Jamaicakl#1
+```
+
+## Lecturer
+
+```txt
+Email: lecturer1@edunexus.com
+Password: Jamaicakl#1
+```
+
+## Student
+
+```txt
+Email: student1@edunexus.com
+Password: Jamaicakl#1
+```
+
+---
+
+# Future Improvements
+
+* File uploads
+* Email notifications
+* Real-time chat
+* Pagination
+* Docker deployment
+* Unit testing
+* API rate limiting
+* Redis caching
+* Frontend integration
+
+---
+
+# Author
+
+EduNexus Backend System
+
+Built using Flask and PostgreSQL.
