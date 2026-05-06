@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "EduNexus API Collection",
+    "_postman_id": "edunexus-api-collection",
+    "description": "Postman collection for EduNexus Backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register User",
+      "request": {
+        "description": "Registers a new user in the EduNexus system.",
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Test Student\",\n  \"email\": \"teststudent@gmail.com\",\n  \"password\": \"Jamaicakl#1\",\n  \"role\": \"student\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/auth/register",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "5000",
+          "path": ["api", "v1", "auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "Login User",
+      "request": {
+        "description": "Authenticates a user and returns a JWT token.",
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"teststudent@gmail.com\",\n  \"password\": \"Jamaicakl#1\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/auth/login",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "5000",
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Create Course",
+      "request": {
+        "description": "Creates a new course. Admin only.",
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer your_admin_token"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_code\": \"COMP3901\",\n  \"course_name\": \"Final Year Project\",\n  \"description\": \"Software engineering capstone project\",\n  \"lecturer_id\": 1\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "5000",
+          "path": ["api", "v1", "courses"]
+        }
+      }
+    },
+    {
+      "name": "Get Courses",
+      "request": {
+        "description": "Retrieves all available courses.",
+        "method": "GET",
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "5000",
+          "path": ["api", "v1", "courses"]
+        }
+      }
+    },
+    {
+      "name": "Enroll Course",
+      "request": {
+        "description": "Enrolls the logged-in student in a course.",
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer your_student_token"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": 1\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses/enroll",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "5000",
+          "path": ["api", "v1", "courses", "enroll"]
+        }
+      }
+    }
+  ]
+}
