@@ -1,3 +1,4 @@
+from functools import wraps
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db_connection
@@ -5,8 +6,84 @@ import jwt
 import datetime
 
 routes_bp = Blueprint("routes", __name__)
+SECRET_KEY = "edunexus_secret_key"
 
 
+def token_required(f):
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+
+        token = None
+
+        if "Authorization" in request.headers:
+
+            auth_header = request.headers["Authorization"]
+
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "Invalid authorization format"
+                }), 401
+
+        if not token:
+
+            return jsonify({
+                "success": False,
+                "message": "Token is missing"
+            }), 401
+
+        try:
+
+            data = jwt.decode(
+                token,
+                SECRET_KEY,
+                algorithms=["HS256"]
+            )
+
+        except jwt.ExpiredSignatureError:
+
+            return jsonify({
+                "success": False,
+                "message": "Token has expired"
+            }), 401
+
+        except jwt.InvalidTokenError:
+
+            return jsonify({
+                "success": False,
+                "message": "Invalid token"
+            }), 401
+
+        return f(data, *args, **kwargs)
+
+    return decorated
+
+
+def role_required(allowed_roles):
+
+    def decorator(f):
+
+        @wraps(f)
+        def decorated(current_user, *args, **kwargs):
+
+            if current_user["role"] not in allowed_roles:
+
+                return jsonify({
+                    "success": False,
+                    "message": "Access denied"
+                }), 403
+
+            return f(current_user, *args, **kwargs)
+
+        return decorated
+
+    return decorator
+
+
+# Home route.
 @routes_bp.route("/")
 def home():
 
@@ -15,6 +92,7 @@ def home():
     })
 
 
+# Tests the database connection.
 @routes_bp.route("/test-db")
 def test_db():
 
@@ -34,6 +112,7 @@ def test_db():
     })
 
 
+# Registers a new user.
 @routes_bp.route("/api/v1/auth/register", methods=["POST"])
 def register():
 
@@ -51,12 +130,18 @@ def register():
             "message": "All fields are required"
         }), 400
 
+    if role not in ["admin", "lecturer", "student"]:
+
+        return jsonify({
+            "success": False,
+            "message": "Invalid role"
+        }), 400
+
     try:
 
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Check if email already exists
         cur.execute(
             "SELECT user_id FROM users WHERE email = %s",
             (email,)
@@ -74,10 +159,8 @@ def register():
                 "message": "Email already exists"
             }), 409
 
-        # Hash password
         password_hash = generate_password_hash(password)
 
-        # Insert user
         cur.execute("""
             INSERT INTO users (
                 full_name,
@@ -111,6 +194,7 @@ def register():
         }), 500
 
 
+# Logs in a user and returns a JWT token.
 @routes_bp.route("/api/v1/auth/login", methods=["POST"])
 def login():
 
@@ -162,14 +246,13 @@ def login():
                 "message": "Invalid email or password"
             }), 401
 
-        # Generate JWT token
         token = jwt.encode({
             "user_id": user_id,
             "email": email,
             "role": role,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         },
-        "edunexus_secret_key",
+        SECRET_KEY,
         algorithm="HS256")
 
         return jsonify({
@@ -190,9 +273,13 @@ def login():
             "success": False,
             "message": str(e)
         }), 500
-    
+
+
+# Creates a course.
 @routes_bp.route("/api/v1/courses", methods=["POST"])
-def create_course():
+@token_required
+@role_required(["admin"])
+def create_course(current_user):
 
     data = request.get_json()
 
@@ -213,7 +300,6 @@ def create_course():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Check if course already exists
         cur.execute(
             "SELECT course_id FROM courses WHERE course_code = %s",
             (course_code,)
@@ -231,7 +317,6 @@ def create_course():
                 "message": "Course already exists"
             }), 409
 
-        # Insert course
         cur.execute("""
             INSERT INTO courses (
                 course_code,
@@ -263,8 +348,9 @@ def create_course():
             "success": False,
             "message": str(e)
         }), 500
-    
 
+
+# Retrieves all courses.
 @routes_bp.route("/api/v1/courses", methods=["GET"])
 def get_courses():
 
@@ -317,19 +403,23 @@ def get_courses():
             "message": str(e)
         }), 500
 
+
+# Enrolls the logged-in student in a course.
 @routes_bp.route("/api/v1/courses/enroll", methods=["POST"])
-def enroll_course():
+@token_required
+@role_required(["student"])
+def enroll_course(current_user):
 
     data = request.get_json()
 
-    student_id = data.get("student_id")
+    student_id = current_user["user_id"]
     course_id = data.get("course_id")
 
-    if not student_id or not course_id:
+    if not course_id:
 
         return jsonify({
             "success": False,
-            "message": "Student ID and Course ID are required"
+            "message": "Course ID is required"
         }), 400
 
     try:
@@ -337,7 +427,6 @@ def enroll_course():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Check if already enrolled
         cur.execute("""
             SELECT enrollment_id
             FROM course_enrollments
@@ -357,7 +446,6 @@ def enroll_course():
                 "message": "Student already enrolled"
             }), 409
 
-        # Insert enrollment
         cur.execute("""
             INSERT INTO course_enrollments (
                 student_id,
@@ -383,8 +471,12 @@ def enroll_course():
             "message": str(e)
         }), 500
 
+
+# Retrieves students enrolled in a course.
 @routes_bp.route("/api/v1/courses/<int:course_id>/students", methods=["GET"])
-def get_course_students(course_id):
+@token_required
+@role_required(["admin", "lecturer"])
+def get_course_students(current_user, course_id):
 
     try:
 
@@ -434,8 +526,11 @@ def get_course_students(course_id):
             "message": str(e)
         }), 500
 
+
+# Creates a forum for a course.
 @routes_bp.route("/api/v1/forums", methods=["POST"])
-def create_forum():
+@token_required
+def create_forum(current_user):
 
     data = request.get_json()
 
@@ -443,12 +538,14 @@ def create_forum():
     title = data.get("title")
 
     if not course_id or not title:
+
         return jsonify({
             "success": False,
             "message": "Course ID and forum title are required"
         }), 400
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -468,26 +565,30 @@ def create_forum():
         }), 201
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# Creates a thread in a forum.
 @routes_bp.route("/api/v1/threads", methods=["POST"])
-def create_thread():
+@token_required
+def create_thread(current_user):
 
     data = request.get_json()
 
     forum_id = data.get("forum_id")
-    user_id = data.get("user_id")
+    user_id = current_user["user_id"]
     title = data.get("title")
     content = data.get("content")
 
-    if not forum_id or not user_id or not title or not content:
+    if not forum_id or not title or not content:
 
         return jsonify({
             "success": False,
-            "message": "All fields are required"
+            "message": "Forum ID, title and content are required"
         }), 400
 
     try:
@@ -527,29 +628,42 @@ def create_thread():
             "message": str(e)
         }), 500
 
+
+# Creates a reply to a thread.
 @routes_bp.route("/api/v1/replies", methods=["POST"])
-def create_reply():
+@token_required
+def create_reply(current_user):
 
     data = request.get_json()
 
     thread_id = data.get("thread_id")
-    user_id = data.get("user_id")
+    user_id = current_user["user_id"]
     content = data.get("content")
 
-    if not thread_id or not user_id or not content:
+    if not thread_id or not content:
+
         return jsonify({
             "success": False,
-            "message": "Thread ID, User ID and content are required"
+            "message": "Thread ID and content are required"
         }), 400
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO replies (thread_id, user_id, content)
+            INSERT INTO replies (
+                thread_id,
+                user_id,
+                content
+            )
             VALUES (%s, %s, %s)
-        """, (thread_id, user_id, content))
+        """, (
+            thread_id,
+            user_id,
+            content
+        ))
 
         conn.commit()
 
@@ -562,13 +676,17 @@ def create_reply():
         }), 201
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# Retrieves replies for a thread.
 @routes_bp.route("/api/v1/threads/<int:thread_id>/replies", methods=["GET"])
-def get_thread_replies(thread_id):
+@token_required
+def get_thread_replies(current_user, thread_id):
 
     try:
 
@@ -622,8 +740,12 @@ def get_thread_replies(thread_id):
             "message": str(e)
         }), 500
 
+
+# Creates an assignment for a course.
 @routes_bp.route("/api/v1/assignments", methods=["POST"])
-def create_assignment():
+@token_required
+@role_required(["lecturer", "admin"])
+def create_assignment(current_user):
 
     data = request.get_json()
 
@@ -633,12 +755,14 @@ def create_assignment():
     due_date = data.get("due_date")
 
     if not course_id or not title or not due_date:
+
         return jsonify({
             "success": False,
             "message": "Course ID, title and due date are required"
         }), 400
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -648,6 +772,7 @@ def create_assignment():
         """, (course_id, title, description, due_date))
 
         conn.commit()
+
         cur.close()
         conn.close()
 
@@ -657,27 +782,34 @@ def create_assignment():
         }), 201
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# Creates a submission for the logged-in student.
 @routes_bp.route("/api/v1/submissions", methods=["POST"])
-def create_submission():
+@token_required
+@role_required(["student"])
+def create_submission(current_user):
 
     data = request.get_json()
 
     assignment_id = data.get("assignment_id")
-    student_id = data.get("student_id")
+    student_id = current_user["user_id"]
     submission_text = data.get("submission_text")
 
-    if not assignment_id or not student_id or not submission_text:
+    if not assignment_id or not submission_text:
+
         return jsonify({
             "success": False,
-            "message": "Assignment ID, Student ID and submission text are required"
+            "message": "Assignment ID and submission text are required"
         }), 400
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -705,25 +837,31 @@ def create_submission():
         }), 201
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
-    
+
+
+# Grades a student submission.
 @routes_bp.route("/api/v1/grades", methods=["POST"])
-def grade_submission():
+@token_required
+@role_required(["lecturer", "admin"])
+def grade_submission(current_user):
 
     data = request.get_json()
 
     submission_id = data.get("submission_id")
-    lecturer_id = data.get("lecturer_id")
+    lecturer_id = current_user["user_id"]
     grade = data.get("grade")
     feedback = data.get("feedback")
 
-    if submission_id is None or lecturer_id is None or grade is None:
+    if submission_id is None or grade is None:
+
         return jsonify({
             "success": False,
-            "message": "Submission ID, lecturer ID and grade are required"
+            "message": "Submission ID and grade are required"
         }), 400
 
     try:
@@ -763,10 +901,14 @@ def grade_submission():
             "message": str(e)
         }), 500
 
+
+# Retrieves assignments for a course.
 @routes_bp.route("/api/v1/courses/<int:course_id>/assignments", methods=["GET"])
-def get_course_assignments(course_id):
+@token_required
+def get_course_assignments(current_user, course_id):
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -791,6 +933,7 @@ def get_course_assignments(course_id):
         assignment_list = []
 
         for assignment in assignments:
+
             assignment_list.append({
                 "assignment_id": assignment[0],
                 "course_id": assignment[1],
@@ -806,29 +949,37 @@ def get_course_assignments(course_id):
         }), 200
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# Creates a calendar event for a course.
 @routes_bp.route("/api/v1/calendar-events", methods=["POST"])
-def create_calendar_event():
+@token_required
+@role_required(["lecturer", "admin"])
+def create_calendar_event(current_user):
 
     data = request.get_json()
 
     course_id = data.get("course_id")
-    creator_id = data.get("creator_id")
     title = data.get("title")
     description = data.get("description")
     event_date = data.get("event_date")
 
-    if not course_id or not creator_id or not title or not event_date:
+    creator_id = current_user["user_id"]
+
+    if not course_id or not title or not event_date:
+
         return jsonify({
             "success": False,
-            "message": "Course ID, creator ID, title and event date are required"
+            "message": "Course ID, title and event date are required"
         }), 400
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -850,6 +1001,7 @@ def create_calendar_event():
         ))
 
         conn.commit()
+
         cur.close()
         conn.close()
 
@@ -859,15 +1011,20 @@ def create_calendar_event():
         }), 201
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# Retrieves calendar events for a course.
 @routes_bp.route("/api/v1/courses/<int:course_id>/calendar-events", methods=["GET"])
-def get_course_calendar_events(course_id):
+@token_required
+def get_course_calendar_events(current_user, course_id):
 
     try:
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -894,6 +1051,7 @@ def get_course_calendar_events(course_id):
         event_list = []
 
         for event in events:
+
             event_list.append({
                 "event_id": event[0],
                 "title": event[1],
@@ -909,6 +1067,7 @@ def get_course_calendar_events(course_id):
         }), 200
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
