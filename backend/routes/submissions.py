@@ -5,9 +5,8 @@ from middleware.auth_middleware import token_required
 submissions_bp = Blueprint("submissions_bp", __name__)
 
 
-# =========================================
+
 # SUBMIT ASSIGNMENT
-# =========================================
 @submissions_bp.route("/submissions", methods=["POST"])
 @token_required
 def submit_assignment(current_user):
