@@ -5,9 +5,8 @@ from middleware.auth_middleware import token_required
 grades_bp = Blueprint("grades_bp", __name__)
 
 
-# =========================================
+
 # GRADE SUBMISSION
-# =========================================
 @grades_bp.route("/grades", methods=["POST"])
 @token_required
 def grade_submission(current_user):
