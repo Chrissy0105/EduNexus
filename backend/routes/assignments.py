@@ -5,9 +5,8 @@ from middleware.auth_middleware import token_required
 assignments_bp = Blueprint("assignments_bp", __name__)
 
 
-# =========================================
+
 # CREATE ASSIGNMENT
-# =========================================
 @assignments_bp.route("/assignments", methods=["POST"])
 @token_required
 def create_assignment(current_user):
@@ -71,9 +70,8 @@ def create_assignment(current_user):
         conn.close()
 
 
-# =========================================
+
 # GET COURSE ASSIGNMENTS
-# =========================================
 @assignments_bp.route("/courses/<int:course_id>/assignments", methods=["GET"])
 @token_required
 def get_course_assignments(current_user, course_id):
