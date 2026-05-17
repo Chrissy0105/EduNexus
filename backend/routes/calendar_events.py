@@ -5,9 +5,8 @@ from middleware.auth_middleware import token_required
 calendar_bp = Blueprint("calendar_bp", __name__)
 
 
-# =========================================
+
 # CREATE CALENDAR EVENT
-# =========================================
 @calendar_bp.route("/calendar-events", methods=["POST"])
 @token_required
 def create_calendar_event(current_user):
@@ -71,9 +70,8 @@ def create_calendar_event(current_user):
         conn.close()
 
 
-# =========================================
+
 # GET COURSE CALENDAR EVENTS
-# =========================================
 @calendar_bp.route("/courses/<int:course_id>/calendar-events", methods=["GET"])
 @token_required
 def get_calendar_events(current_user, course_id):
