@@ -1,0 +1,361 @@
+{
+  "info": {
+    "_postman_id": "f8b2bde3-89c1-4f94-acd2-9ee162104825",
+    "name": "EduNexus API Collection",
+    "description": "Postman collection for EduNexus Backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_collection_link": "https://go.postman.co/collection/54018898-f8b2bde3-89c1-4f94-acd2-9ee162104825?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Adrienne Bailey\",\n  \"email\": \"student3@gmail.com\",\n  \"password\": \"1234\",\n  \"role\": \"student\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/auth/register",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","auth","register"]
+        },
+        "description": "Registers a new user in the EduNexus system."
+      }
+    },
+    {
+      "name": "Login User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"1234\"\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/auth/login",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","auth","login"]
+        },
+        "description": "Authenticates a user and returns a JWT token."
+      }
+    },
+    {
+      "name": "Create Course",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_code\": \"SOCI1010\",\n  \"course_name\": \"Introduction to Sociology\",\n  \"description\": \"Study of society, culture, and social behavior.\",\n  \"lecturer_id\": 5\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","courses"]
+        }
+      }
+    },
+    {
+      "name": "Get Courses",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","courses"]
+        }
+      }
+    },
+    {
+      "name": "Enroll Course",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{student_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": 6\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses/enroll",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","courses","enroll"]
+        }
+      }
+    },
+    {
+      "name": "Create Thread",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"forum_id\": 1,\r\n  \"title\": \"Welcome Thread\",\r\n  \"content\": \"Introduce yourself here.\"\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/threads",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","threads"]
+        }
+      }
+    },
+    {
+      "name": "Create Reply",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{student_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/threads/1/replies",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","threads","1","replies"]
+        }
+      }
+    },
+    {
+      "name": "Thread Replies",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{student_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/threads/1/replies",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","threads","1","replies"]
+        }
+      }
+    },
+    {
+      "name": "Create Assignment",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"course_id\": 1,\r\n  \"title\": \"SQL Assignment\",\r\n  \"description\": \"Practice joins and aggregation.\",\r\n  \"due_date\": \"2026-05-20 23:59:00\"\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/assignments",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","assignments"]
+        }
+      }
+    },
+    {
+      "name": "Submit Assignment",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{student_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"assignment_id\": 1,\r\n  \"submission_text\": \"My completed assignment submission.\"\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/submissions",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","submissions"]
+        }
+      }
+    },
+    {
+      "name": "Grade Submission",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"submission_id\": 1,\r\n  \"grade\": 95,\r\n  \"feedback\": \"Excellent work.\"\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/grades",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","grades"]
+        }
+      }
+    },
+    {
+      "name": "Course Assignments",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses/1/assignments",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","courses","1","assignments"]
+        }
+      }
+    },
+    {
+      "name": "Create Calendar Event",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"course_id\": 1,\r\n  \"title\": \"Assignment Deadline\",\r\n  \"description\": \"SQL Assignment Due\",\r\n  \"event_date\": \"2026-05-20 23:59:00\"\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/calendar-events",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","calendar-events"]
+        }
+      }
+    },
+    {
+      "name": "Calendar Event",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/v1/courses/1/calendar-events",
+          "protocol": "http",
+          "host": ["127","0","0","1"],
+          "port": "5000",
+          "path": ["api","v1","courses","1","calendar-events"]
+        }
+      }
+    }
+  ]
+}
